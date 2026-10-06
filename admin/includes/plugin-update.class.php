@@ -280,6 +280,15 @@ class RevSliderPluginUpdate extends RevSliderFunctions {
 			$upd->update_post_slide_template_v7();
 			$upd->set_version('6.7.24');
 		}
+
+		// force update check to get the latest data
+		if(version_compare($version, '6.7.25', '<')){
+			require_once(RS_PLUGIN_PATH . 'includes/update.class.php'); 
+			$rsu = new RevSliderUpdate(RS_REVISION);
+			$rsu->force = true;
+			$rsu->_retrieve_version_info();
+			$upd->set_version('6.7.25');
+		}
 	}
 	
 	/**
@@ -352,6 +361,10 @@ class RevSliderPluginUpdate extends RevSliderFunctions {
 		
 		if(version_compare($version, '6.7.24', '<')){
 			$this->upgrade_slider_to_6_7_24($slider);
+		}
+
+		if(version_compare($version, '6.7.51', '<')){
+			$this->upgrade_slider_to_6_7_51($slider);
 		}
 	}
 	
@@ -1173,6 +1186,25 @@ class RevSliderPluginUpdate extends RevSliderFunctions {
 					$slider->update_params($params, true);
 					
 					$slider->update_settings(array('version' => '6.7.24'));
+				}
+			}
+		}
+	}
+
+	public function upgrade_slider_to_6_7_51($sliders = false){
+		$sr = new RevSliderSlider();
+		
+		$sliders = ($sliders === false) ? $sr->get_sliders() : array($sliders); //do it on all Sliders if false
+		
+		if(!empty($sliders) && is_array($sliders)){
+			foreach($sliders as $slider){
+				if(version_compare($slider->get_setting('version', '1.0.0'), '6.7.51', '<')){
+					$params = $slider->get_params();
+					$params['version'] = '6.7.51';
+					
+					$slider->update_params($params, true);
+					
+					$slider->update_settings(array('version' => '6.7.51'));
 				}
 			}
 		}

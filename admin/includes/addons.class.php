@@ -123,6 +123,8 @@ class RevSliderAddons extends RevSliderFunctions { //before: Rev_addon_Admin
 	 * @since 6.0
 	 */
 	public function install_addon($addon, $force = false){
+		if(empty($addon) || 0 !== strpos($addon, 'revslider-')) return false;
+
 		if($this->_truefalse(get_option('revslider-valid', 'false')) !== true) return __('Please activate Slider Revolution', 'revslider');
 		
 		//check if downloaded already
@@ -231,6 +233,8 @@ class RevSliderAddons extends RevSliderFunctions { //before: Rev_addon_Admin
 	 * @since    1.0.0
 	 */
 	public function activate_addon($addon){
+		if(empty($addon) || 0 !== strpos($addon, 'revslider-')) return false;
+
 		// Verify that the incoming request is coming with the security nonce
 		if(isset($addon)){
 			$result = activate_plugin($addon);
@@ -251,6 +255,8 @@ class RevSliderAddons extends RevSliderFunctions { //before: Rev_addon_Admin
 	 * @since    1.0.0
 	 */
 	public function deactivate_addon($addon){
+		if(empty($addon) || 0 !== strpos($addon, 'revslider-')) return false;
+
 		// Verify that the incoming request is coming with the security nonce
 		deactivate_plugins($addon);
 		return true;

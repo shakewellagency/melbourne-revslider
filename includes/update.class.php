@@ -14,26 +14,54 @@ class RevSliderUpdate extends RevSliderFunctions {
 	private $remote_url_info = 'revslider/revslider.php';
 	private $plugin_slug = 'revslider';
 	private $version;
-	private $plugins;
 	private $option;
 	private $data;
 	public $force = false;
+	protected static $site_transient_hook_added = false;
 	
 	
 	public function __construct($version){
 		$this->option = $this->plugin_slug . '_update_info';
 		$this->data = new stdClass;
-		$this->_retrieve_version_info();
 		$this->version = (empty($version)) ? RS_REVISION : $version;
+
+		if (!self::$site_transient_hook_added) {
+			add_filter( 'site_transient_update_plugins', array( &$this, 'check_sr7_update_transient' ), 10, 2 );
+			self::$site_transient_hook_added = true;
+		}
 	}
-	
-	
+
+	/**
+	 * @param mixed $value Value of site transient.
+	 * @param string $transient Transient name.
+	 * @return mixed
+	 */
+	public function check_sr7_update_transient($value, $transient){
+		if ('update_plugins' !== $transient) return $value;
+
+		$code = get_option( 'revslider-code', '' );
+		$get_version = sanitize_key( wp_unslash( $_POST['get_version'] ?? '' ) );
+		if ('sr7' !== $get_version || empty($code)) return $value;
+
+		$rslb = RevSliderGlobals::instance()->get('RevSliderLoadBalancer');
+		if(empty($value)) $value = new stdClass();
+		if(!isset($value->response)) $value->response = array();
+		$value->response[RS_PLUGIN_SLUG_PATH] = new stdClass();
+		$value->response[RS_PLUGIN_SLUG_PATH]->slug = RS_PLUGIN_SLUG;
+		$value->response[RS_PLUGIN_SLUG_PATH]->plugin = RS_PLUGIN_SLUG_PATH;
+		$value->response[RS_PLUGIN_SLUG_PATH]->new_version = '7.0.0';
+		$value->response[RS_PLUGIN_SLUG_PATH]->package = $rslb->get_url('updates').'/revslider/download.php?code='.$code.'&version=7.0.0';
+		$value->response[RS_PLUGIN_SLUG_PATH]->tested = preg_replace('/[^0-9.].*/', '', get_bloginfo('version'));;
+		$value->response[RS_PLUGIN_SLUG_PATH]->url = 'https://www.sliderrevolution.com/';
+		return $value;
+	}
+
+
 	public function add_update_checks(){
 		if($this->force === true){
 			ini_set('max_execution_time', 300); //an update can follow, so set the execution time high for the runtime
 			$transient = get_site_transient('update_plugins');
 			$rs_t = $this->set_update_transient($transient);
-			
 			if(!empty($rs_t)){
 				set_site_transient('update_plugins', $rs_t);
 			}
@@ -129,7 +157,6 @@ class RevSliderUpdate extends RevSliderFunctions {
 			'version'     => urlencode( RS_REVISION ),
 			'last_launch' => urlencode( get_option( 'rs_last_launch', '' ) ),
 		);
-		
 		if($this->_truefalse(get_option('revslider-valid', 'false')) !== true && version_compare(RS_REVISION, get_option('revslider-stable-version', '4.2'), '<')){ //We'll get the last stable only now!
 			$rattr['get_stable'] = 'true';
 		}
@@ -170,7 +197,6 @@ class RevSliderUpdate extends RevSliderFunctions {
 				'addition' => apply_filters('revslider_retrieve_version_info_addition', array()),
 				'last_launch' => urlencode( get_option( 'rs_last_launch', '' ) ),
 			);
-
 			$request	= $rslb->call_url($this->remote_url, $data, 'updates');
 			$version_info = wp_remote_retrieve_body($request);
 			
@@ -193,6 +219,9 @@ class RevSliderUpdate extends RevSliderFunctions {
 					$addons = get_option('revslider-addons', array());
 					$addons = (is_object($addons)) ? (array)$addons : $addons;
 					$addons = (!is_array($addons)) ? json_decode($addons, true) : $addons;
+					if ( json_last_error() !== JSON_ERROR_NONE || empty($addons) ) {
+						$addons = array();
+					}
 					
 					$cur_addons_count = count($addons);
 					$new_addons_count = count((array)$version_info->addons);

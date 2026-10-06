@@ -345,11 +345,11 @@ class RevSliderAdmin extends RevSliderFunctionsAdmin {
 				exit;
 			break;
 			case 'revslider-documentation':
-				wp_redirect('https://www.sliderrevolution.com/manual/quick-setup-register-your-plugin/?utm_source=admin&utm_medium=menu&utm_campaign=srusers&utm_content=usedocumentation&premium='.$tp_premium);
+				wp_redirect('https://sr6archive.sliderrevolution.com/manual/quick-setup-register-your-plugin/?utm_source=admin&utm_medium=menu&utm_campaign=srusers&utm_content=usedocumentation&premium='.$tp_premium);
 				exit;
 			break;
 			case 'revslider-help-center':
-				wp_redirect('https://www.sliderrevolution.com/help-center?utm_source=admin&utm_medium=menu&utm_campaign=srusers&utm_content=help&premium='.$tp_premium);
+				wp_redirect('https://sr6archive.sliderrevolution.com?utm_source=admin&utm_medium=menu&utm_campaign=srusers&utm_content=help&premium='.$tp_premium);
 				exit;
 			break;
 			case 'revslider-templates':
@@ -629,7 +629,7 @@ class RevSliderAdmin extends RevSliderFunctionsAdmin {
 	public function add_addon_plugins_page_notices(){
 		?>
 		<div class="error below-h2 soc-notice-wrap revaddon-notice" style="display: none;">
-			<p><?php echo __('Action required for Slider Revolution AddOns: Please <a href="https://www.sliderrevolution.com/manual-section/manual/getting-started/quick-setup/" target="_blank" rel="noopener">install</a>/<a href="https://www.sliderrevolution.com/manual-section/manual/getting-started/quick-setup/register-plugin/" target="_blank" rel="noopener">activate</a>/<a href="https://www.sliderrevolution.com/manual-section/manual/getting-started/quick-setup/update-plugin/" target="_blank" rel="noopener">update</a> Slider Revolution</a>', 'revslider'); ?><span data-addon="rs-addon-notice" data-noticeid="rs-addon-merged-notices" style="float: right; cursor: pointer" class="revaddon-dismiss-notice dashicons dashicons-dismiss"></span></p>
+			<p><?php echo __('Action required for Slider Revolution AddOns: Please <a href="https://sr6archive.sliderrevolution.com/manual-section/manual/getting-started/quick-setup/" target="_blank" rel="noopener">install</a>/<a href="https://sr6archive.sliderrevolution.com/manual-section/manual/getting-started/quick-setup/register-plugin/" target="_blank" rel="noopener">activate</a>/<a href="https://sr6archive.sliderrevolution.com/manual-section/manual/getting-started/quick-setup/update-plugin/" target="_blank" rel="noopener">update</a> Slider Revolution</a>', 'revslider'); ?><span data-addon="rs-addon-notice" data-noticeid="rs-addon-merged-notices" style="float: right; cursor: pointer" class="revaddon-dismiss-notice dashicons dashicons-dismiss"></span></p>
 		</div>
 		<?php
 	}
@@ -664,7 +664,7 @@ class RevSliderAdmin extends RevSliderFunctionsAdmin {
 		<tr class="plugin-update-tr active">
             <td colspan="<?php echo $wp_list_table->get_column_count(); ?>" class="plugin-update colspanchange">
                 <div class="update-message notice inline notice-warning notice-alt">
-				<p><?php _e('There is a new version (<a href="https://www.sliderrevolution.com/documentation/changelog/?utm_source=admin&utm_medium=wpplugins&utm_campaign=srusers&utm_content=updateinfo#'.$revision.'" target="_blank">'.$rs_latest_version.'</a>) of Slider Revolution available. To update directly <a href="javascript:;" onclick="RVS.F.showRegisterSliderInfo();">register your license key now</a> or <a href="https://account.sliderrevolution.com/portal/pricing/?utm_source=admin&utm_medium=wpplugins&utm_campaign=srusers&utm_content=updateinfo" target="_blank">purchase a new license key</a> to access <a href="https://www.sliderrevolution.com/premium-slider-revolution/?utm_source=admin&utm_medium=wpplugins&utm_campaign=srusers&utm_content=updateinfo" target="_blank">all premium features</a>.', 'revslider'); ?></p>
+				<p><?php _e('There is a new version (<a href="https://sr6archive.sliderrevolution.com/documentation/changelog/?utm_source=admin&utm_medium=wpplugins&utm_campaign=srusers&utm_content=updateinfo#'.$revision.'" target="_blank">'.$rs_latest_version.'</a>) of Slider Revolution available. To update directly <a href="javascript:;" onclick="RVS.F.showRegisterSliderInfo();">register your license key now</a> or <a href="https://account.sliderrevolution.com/portal/pricing/?utm_source=admin&utm_medium=wpplugins&utm_campaign=srusers&utm_content=updateinfo" target="_blank">purchase a new license key</a> to access <a href="https://www.sliderrevolution.com/premium-slider-revolution/?utm_source=admin&utm_medium=wpplugins&utm_campaign=srusers&utm_content=updateinfo" target="_blank">all premium features</a>.', 'revslider'); ?></p>
                 </div>
 			</td>
         </tr>
@@ -856,70 +856,36 @@ class RevSliderAdmin extends RevSliderFunctionsAdmin {
 	 * @since: 6.0
 	 **/
 	public function create_fake_post($content, $title = 'Slider Revolution'){
-		$post				 = new stdClass();
-		$post->ID			 = -1;
-		$post->post_author	 = get_current_user_id();
-		$post->post_date	 = current_time('mysql');
-		$post->post_date_gmt = current_time('mysql', 1);
-		$post->post_title	 = $title;
-		$post->post_content	 = $content;
-		$post->post_status	 = 'publish';
-		$post->comment_status = 'closed';
-		$post->ping_status	 = 'closed';
-		$post->post_name	 = 'rs-fake-page-' . rand(1, 99999); //append random number to avoid clash
-		$post->post_type	 = 'page';
-		$post->filter		 = 'raw'; //important
-		
-		//$post->post_meta		= new stdClass();
-		//$post->post_meta->_wp_page_template= '../public/views/revslider-page-template.php';
-		
-		//Convert to WP_Post object
-		$wp_post = new WP_Post($post);
-		//Add the fake post to the cache
-		wp_cache_add(-1, $wp_post, 'posts');
-		
-		global $wp, $wp_query;
+		$post_obj					= new stdClass();
+		$post_obj->ID				= -1;
+		$post_obj->post_author		= get_current_user_id();
+		$post_obj->post_date		= current_time('mysql');
+		$post_obj->post_date_gmt	= current_time('mysql', 1);
+		$post_obj->post_title		= $title;
+		$post_obj->post_content		= $content;
+		$post_obj->post_status		= 'publish';
+		$post_obj->comment_status	= 'closed';
+		$post_obj->ping_status		= 'closed';
+		$post_obj->post_name		= 'rs-fake-page-' . rand(1, 99999);
+		$post_obj->post_type		= 'page';
+		$post_obj->filter			= 'raw';
 
-		// Update the main query
-		$wp_query->queried_object_id = -1;
-		$wp_query->post				 = $wp_post;
-		$wp_query->posts			 = array($wp_post);
-		$wp_query->queried_object	 = $wp_post;
-		$wp_query->found_posts		 = 1;
-		$wp_query->post_count		 = 1;
-		$wp_query->max_num_pages	 = 1;
-		$wp_query->is_page			 = true;
-		$wp_query->is_singular		 = true;
-		$wp_query->is_single		 = false;
-		$wp_query->is_attachment	 = false;
-		$wp_query->is_archive		 = false;
-		$wp_query->is_category		 = false;
-		$wp_query->is_tag			 = false;
-		$wp_query->is_tax			 = false;
-		$wp_query->is_author		 = false;
-		$wp_query->is_date			 = false;
-		$wp_query->is_year			 = false;
-		$wp_query->is_month			 = false;
-		$wp_query->is_day			 = false;
-		$wp_query->is_time			 = false;
-		$wp_query->is_search		 = false;
-		$wp_query->is_feed			 = false;
-		$wp_query->is_comment_feed	 = false;
-		$wp_query->is_trackback		 = false;
-		$wp_query->is_home			 = false;
-		$wp_query->is_embed			 = false;
-		$wp_query->is_404			 = false;
-		$wp_query->is_paged			 = false;
-		$wp_query->is_admin			 = false;
-		$wp_query->is_preview		 = false;
-		$wp_query->is_robots		 = false; 
-		$wp_query->is_posts_page	 = false;
-		$wp_query->is_post_type_archive	= false;
-		
-		//Update globals
-		$GLOBALS['wp_query'] = $wp_query;
-		$wp->register_globals();
-		
+		$wp_post = new WP_Post($post_obj);
+
+		//cache
+		wp_cache_add(-1, $wp_post, 'posts');
+
+		//expose for the template
+		global $SR_GLOBALS;
+		$SR_GLOBALS['preview_mode']	= true;
+		$SR_GLOBALS['preview_post']	= $wp_post;
+		//$SR_GLOBALS['preview_content'] = $content;
+
+		//Set global $post so body_class(), etc. have something
+		global $post;
+		$post = $wp_post;
+		setup_postdata($post);
+
 		return $wp_post;
 	}
 	

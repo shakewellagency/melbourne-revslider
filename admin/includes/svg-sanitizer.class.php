@@ -777,7 +777,7 @@ class RevSliderSvgSanitizer
 		}
 
 		// Allow relative URIs.
-		if ('/' === $value[0] && '/' !== $value[1]) {
+		if (strlen($value) > 1 && '/' === $value[0] && '/' !== $value[1]) {
 			return true;
 		}
 
@@ -832,7 +832,11 @@ class RevSliderSvgSanitizer
 			}
 			$root = $element;
 		}
-		
+
+		if (!is_object($root)) {
+			throw new LogicException('No SVG root element found');
+		}
+
 		$this->defaultNSURI = (string)$root->namespaceURI;
 		if ($this->defaultNSURI !== '') {
 			$this->xPath->registerNamespace('svg', $this->defaultNSURI);

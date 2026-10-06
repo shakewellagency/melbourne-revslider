@@ -93,7 +93,7 @@ if(!defined('ABSPATH')) exit();
 						<div class="div10"></div>
 						<graybutton id="rbm_track_disable" style="display:inline-block;" class=""><?php _e('No, thanks.', 'revslider');?></graybutton>
 						<div class="div50"></div>						
-						<a target="_blank" rel="noopener"  href=" https://www.sliderrevolution.com/plugin-privacy-policy/" class="simpletext smalllink" style="display:inline-block;"><?php _e('View our detailled data collection policy', 'revslider');?></a>
+						<a target="_blank" rel="noopener"  href="https://www.sliderrevolution.com/plugin-privacy-policy/" class="simpletext smalllink" style="display:inline-block;"><?php _e('View our detailled data collection policy', 'revslider');?></a>
 					</div>
 				</div>
 			</div>
@@ -113,7 +113,7 @@ if(!defined('ABSPATH')) exit();
 							<div class="bigredwarning"><i class="material-icons">error_outline</i></div>
 							<div class="mcg_page_title warningtext"><?php _e('URGENT', 'revslider');?></div>
 							<div class="mcg_page_title"><?php _e('Your Slider Revolution License Has Been Deactivated!', 'revslider');?></div>
-							<div><a class="simpletext smalllink" target="_blank" rel="noopener" href="https://www.sliderrevolution.com/faq/why-was-my-slider-revolution-license-deactivated/?utm_source=admin&utm_medium=button&utm_campaign=srusers&utm_content=deactivatedfaq"><?php _e('Wondering why this happened? Click here!', 'revslider');?></a></div>
+							<div><a class="simpletext smalllink" target="_blank" rel="noopener" href="https://sr6archive.sliderrevolution.com/faq/why-was-my-slider-revolution-license-deactivated/?utm_source=admin&utm_medium=button&utm_campaign=srusers&utm_content=deactivatedfaq"><?php _e('Wondering why this happened? Click here!', 'revslider');?></a></div>
 							<div class="div35"></div>
 							<div class="dr_warningbox">
 								<div class="mcg_page_subtitle"><i class="material-icons warningicon">block</i></div>
@@ -221,7 +221,7 @@ if(!defined('ABSPATH')) exit();
 								<div class="div20"></div>
 								<div class="v_checkrow" id="velocity_check_2"><div class="v_checklist"><i class="material-icons">check</i></div><div class="mcg_page_content" style="opacity:1"><span style="opacity:0.5"><?php _e('Yes, I ran a','revslider')?></span> <a class="mcg_page_content" href="https://www.sliderrevolution.com/sr7-velocity-frontend-engine-update/#guidestep2" target="_blank" rel="noopener"><?php _e('SR7 Engine Pre-Check using the ?srengine=7','revslider'); ?></a><br><span style="opacity:0.5"><?php _e('URL parameter on every page using Slider Revolution','revslider'); ?></span></div></div>
 								<div class="div20"></div>
-								<div class="v_checkrow" id="velocity_check_3"><div class="v_checklist"><i class="material-icons">check</i></div><div class="mcg_page_content"><?php _e('Yes, I updated any custom or third-party','revslider'); ?></div> <a  class="mcg_page_content" href="https://www.sliderrevolution.com/manual/custom-code-porting-api-reference/" target="_blank"><?php _e('Scripts/CSS','revslider'); ?></a></div>
+								<div class="v_checkrow" id="velocity_check_3"><div class="v_checklist"><i class="material-icons">check</i></div><div class="mcg_page_content"><?php _e('Yes, I updated any custom or third-party','revslider'); ?></div> <a  class="mcg_page_content" href="https://sr6archive.sliderrevolution.com/manual/custom-code-porting-api-reference/" target="_blank"><?php _e('Scripts/CSS','revslider'); ?></a></div>
 								<div class="div50"></div>
 								<div class="lilabuybutton disabled" id="velocity_go_sr7" style="display:inline-block;width:250px;"><?php _e('Enable SR7 Engine Now', 'revslider');?></div>
 								<div class="div10"></div>

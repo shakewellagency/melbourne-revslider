@@ -808,7 +808,7 @@ foreach ($wc_sortby as $wc_val => $wc_name) {
 							<row>
 								<labelhalf><i class="material-icons vmi">sms_failed</i></labelhalf>
 																																	  
-								<contenthalf><div class="function_info"><?php _e('Please check this FAQ on how to <a target="_blank" rel="noopener" href="https://www.sliderrevolution.com/faq/instagram-stream-setup-instructions-with-access-token/">generate</a> your Instagram Access Token in Facebook manually.', 'revslider');?></div></contenthalf>
+								<contenthalf><div class="function_info"><?php _e('Please check this FAQ on how to <a target="_blank" rel="noopener" href="https://sr6archive.sliderrevolution.com/faq/instagram-stream-setup-instructions-with-access-token/">generate</a> your Instagram Access Token in Facebook manually.', 'revslider');?></div></contenthalf>
 							</row>
 						</div>
 					</div><!-- END OF COLLAPSABLE -->
@@ -878,7 +878,7 @@ foreach ($wc_sortby as $wc_val => $wc_name) {
 							<div class="div10"></div>
 							<row>
 								<labelhalf><i class="material-icons vmi">sms_failed</i></labelhalf>
-								<contenthalf><div class="function_info"><?php _e('Check the FAQ on <a target="_blank" rel="noopener" href="https://www.sliderrevolution.com/faq/facebook-stream-setup-instructions-access-token/">how to generate</a> Access Token and get Page ID.', 'revslider');?></div></contenthalf>
+								<contenthalf><div class="function_info"><?php _e('Check the FAQ on <a target="_blank" rel="noopener" href="https://sr6archive.sliderrevolution.com/faq/facebook-stream-setup-instructions-access-token/">how to generate</a> Access Token and get Page ID.', 'revslider');?></div></contenthalf>
 							</row>
 						</div>
 

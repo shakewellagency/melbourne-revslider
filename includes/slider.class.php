@@ -723,26 +723,26 @@ class RevSliderSlider extends RevSliderFunctions {
 					$alt		 = '';
 					$title		 = '';
 					switch($altOption){
-						case 'media_library';
+						case 'media_library':
 							$id = attachment_url_to_postid($image);
 							if($id > 0) $alt = get_post_meta($id, '_wp_attachment_image_alt', true);
 						break;
-						case 'file_name';
+						case 'file_name':
 							$alt = $image;
 						break;
-						case 'custom';
+						case 'custom':
 							$alt = $this->get_val($params, array('attributes', 'alt'), '');
 						break;
 					}
 					switch($titleOption){
-						case 'media_library';
+						case 'media_library':
 							$id = attachment_url_to_postid($image);
 							if($id > 0) $title = get_the_title($id);
 						break;
-						case 'file_name';
+						case 'file_name':
 							$title = $image;
 						break;
-						case 'custom';
+						case 'custom':
 							$title = $this->get_val($params, array('attributes', 'title'), '');
 						break;
 					}
@@ -1539,17 +1539,20 @@ class RevSliderSlider extends RevSliderFunctions {
 	public function get_sliders_short_list(){
 		global $wpdb, $SR_GLOBALS;
 		
-		$v6		= $wpdb->get_results($wpdb->prepare("SELECT id, title, alias FROM " . $wpdb->prefix . RevSliderFront::TABLE_SLIDER . " WHERE `type` != 'folder' ORDER BY %s %s", array('id', 'ASC')), ARRAY_A);
+		$v6		= $wpdb->get_results($wpdb->prepare("SELECT id, title, alias, settings FROM " . $wpdb->prefix . RevSliderFront::TABLE_SLIDER . " WHERE `type` != 'folder' ORDER BY %s %s", array('id', 'ASC')), ARRAY_A);
 		$v7		= $wpdb->get_results($wpdb->prepare("SELECT id, title, alias FROM " . $wpdb->prefix . RevSliderFront::TABLE_SLIDER . "7 WHERE `type` != 'folder' ORDER BY %s %s", array('id', 'ASC')), ARRAY_A);
-		$v6s	= $wpdb->get_results($wpdb->prepare("SELECT slider_id, COUNT(slider_id) AS slides FROM " . $wpdb->prefix . RevSliderFront::TABLE_SLIDES . " GROUP BY `slider_id` ORDER BY %s %s", array('sid', 'ASC')), ARRAY_A);
-		$v6ss	= $wpdb->get_results($wpdb->prepare("SELECT slider_id, COUNT(slider_id) AS slides FROM " . $wpdb->prefix . RevSliderFront::TABLE_STATIC_SLIDES . " GROUP BY `slider_id` ORDER BY %s %s", array('sid', 'ASC')), ARRAY_A);
+		$v6s	= $wpdb->get_results($wpdb->prepare("SELECT slider_id, MAX(settings) AS settings, COUNT(slider_id) AS slides FROM " . $wpdb->prefix . RevSliderFront::TABLE_SLIDES . " GROUP BY `slider_id` ORDER BY %s %s", array('sid', 'ASC')), ARRAY_A);
+		$v6ss	= $wpdb->get_results($wpdb->prepare("SELECT slider_id, MAX(settings) AS settings, COUNT(slider_id) AS slides FROM " . $wpdb->prefix . RevSliderFront::TABLE_STATIC_SLIDES . " GROUP BY `slider_id` ORDER BY %s %s", array('sid', 'ASC')), ARRAY_A);
 		$v7s	= $wpdb->get_results($wpdb->prepare("SELECT slider_id, COUNT(slider_id) AS slides FROM " . $wpdb->prefix . RevSliderFront::TABLE_SLIDES . "7 GROUP BY `slider_id` ORDER BY %s %s", array('sid', 'ASC')), ARRAY_A);
+		$v6v	= [];
 		$v6st	= [];
 		$v7st	= [];
 		if(!empty($v6s) && !empty($v6ss)){
 			foreach(array_merge($v6s, $v6ss) as $item){
 				$slider_id = $item['slider_id'];
 				$v6st[$slider_id] = ($v6st[$slider_id] ?? 0) + $item['slides'];
+				$ver = $this->get_val(json_decode($item['settings'], true), 'version', null);
+				$v6v[$slider_id] = !empty($v6v[$slider_id]) && $ver ? (version_compare($ver, $v6v[$slider_id], '<') ? $ver : $v6v[$slider_id]) : ($ver ?? $v6v[$slider_id] ?? null);
 			}
 		}
 		foreach($v7s ?? [] as $item){
@@ -1566,6 +1569,13 @@ class RevSliderSlider extends RevSliderFunctions {
 			$v6[$k]['v7'] = (isset($_v7[$slider['id']])) ? true : false;
 			$v6[$k]['v7'] = (!isset($v6st[$slider['id']]) || !isset($v7st[$slider['id']]) || $v6st[$slider['id']] !== $v7st[$slider['id']]) ? false : $v6[$k]['v7'];
 			$v6[$k]['v7error'] = (isset($failed[$slider['id']])) ? $failed[$slider['id']] : false;
+			if (isset($v6[$k]['settings'])) {
+				$ver = $this->get_val(json_decode($v6[$k]['settings'], true), 'version', null);
+				unset($v6[$k]['settings']);
+				$v6v[$slider['id']] = !empty($v6v[$slider['id']]) && $ver ? (version_compare($ver, $v6v[$slider['id']], '<') ? $ver : $v6v[$slider['id']]) : ($ver ?? $v6v[$slider['id']] ?? null);
+			}
+			$v6[$k]['ver'] = $v6v[$slider['id']] ?? "5";
+			$v6[$k]['oldver'] = version_compare($v6[$k]['ver'], "6.7.14", "<");
 		}
 
 		return (object)$v6;
@@ -2153,6 +2163,14 @@ class RevSliderSlider extends RevSliderFunctions {
 					global $post;
 					//if empty, check referer and get ID from that one if exists
 					$post_id = (empty($post)) ? url_to_postid($this->get_val($_SERVER, 'HTTP_REFERER')) : $this->get_val($post, 'ID');
+					if(empty($post_id) || $post_id === 0) $post_id = get_queried_object_id();
+					if(empty($post_id) || $post_id === 0){
+						$referer = wp_get_referer();
+						if($referer){
+							$referer = strtok($referer, '?'); // remove query string
+							$post_id = url_to_postid($referer);
+						}
+					}
 					$posts = $this->get_specific_posts(array('', $post_id));
 				}elseif(in_array($subtype, array('specific_posts', 'specific_post'), true)){
 					$posts = $this->get_specific_posts($gal_ids);
@@ -2189,6 +2207,20 @@ class RevSliderSlider extends RevSliderFunctions {
 			default:
 				$this->throw_error(__('This Source Type must be from posts.', 'revslider'));
 			break;
+		}
+
+		if(!empty($posts)){
+			foreach($posts as $k => $p){
+				$post_id = (int) $p['ID'];
+				$post    = get_post( $post_id );
+
+				if ( ! $post ||
+				     ! is_post_type_viewable( get_post_type_object( $post->post_type ) ) ||
+				     post_password_required( $post ) )
+				{
+					unset($posts[$k]);
+				}
+			}
 		}
 
 		return $posts;
@@ -2471,7 +2503,7 @@ class RevSliderSlider extends RevSliderFunctions {
 				$max_allowed = 25;
 			break;
 			case 'twitter':
-				$this->throw_error(__('Twitter Stream is no longer available, for further information, please check https://www.sliderrevolution.com/faq/why-are-we-dropping-twitter-api-integration/', 'revslider'));
+				$this->throw_error(__('Twitter Stream is no longer available, for further information, please check https://sr6archive.sliderrevolution.com/faq/why-are-we-dropping-twitter-api-integration/', 'revslider'));
 			break;
 			case 'instagram':
 				$instagram	= RevSliderGlobals::instance()->get('RevSliderInstagram');
@@ -3273,19 +3305,29 @@ class RevSliderSlider extends RevSliderFunctions {
 			if(empty($likes) || $likes === false)				$likes = $this->get_val($entry, array('likestream', 'summary', 'total_count'));
 			if(empty($num_comments) || $num_comments === false)	$num_comments = $this->get_val($entry, array('commentstream', 'summary', 'total_count'));
 
-			$fb_data[] = array(
-				'author'		=> $this->get_val($entry, array('from', 'name')),
-				'customMetas'	=> array(),
-				'content'		=> array('content' => nl2br($this->get_val($entry, array('message')))),
+			if($this->get_val($additions, 'fb_type') == 'album'){
+				$image_array = $this->get_val($entry, 'images');
+				$image_url	= $image_array[0]['source'] ?? $this->get_val( $entry, 'picture' );
+			}else{
+				$image_url	= $this->get_val($entry, 'full_picture');
+			}
+			$image_url = (empty($image_url)) ? RS_PLUGIN_URL_CLEAN.'public/assets/sources/facebook.png' : $image_url;
+			$image_url = (is_ssl()) ? str_replace('http://', 'https://', $image_url) : $image_url;
+			$image_thumb = $this->get_val($entry, 'picture');
+
+			$fb_data[] = [
+				'author'		=> $this->get_val($entry, ['from', 'name']),
+				'customMetas'	=> [],
+				'content'		=> ['content' => nl2br($this->get_val($entry, ['message']))],
 				'likes'			=> $likes,
-				'link'			=> $this->get_val($entry, array('permalink_url')),
-				'media'			=> $this->get_val($entry, array('full_picture')),
-				'modified'		=> $this->convert_post_date($this->get_val($entry, array('updated_time'))),
-				'num_comments'	=> $num_comments,			
-				'publish'		=> $this->convert_post_date($this->get_val($entry, array('created_time'))),
-				'thumb'			=> $this->get_val($entry, array('picture')),
-				'title'			=> $this->get_val($entry, array('message'))
-			);
+				'link'			=> $this->get_val($entry, ['permalink_url']),
+				'media'			=> $image_url,
+				'modified'		=> $this->convert_post_date($this->get_val($entry, ['updated_time'])),
+				'num_comments'	=> $num_comments,
+				'publish'		=> $this->convert_post_date($this->get_val($entry, ['created_time'])),
+				'thumb'			=> $image_thumb,
+				'title'			=> $this->get_val($entry, ['message'])
+			];
 		}
 
 		return $fb_data;

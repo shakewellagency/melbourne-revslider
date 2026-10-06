@@ -1329,7 +1329,7 @@ class RevSliderSlide extends RevSliderFunctions {
 				$this->init_by_facebook($a['slider_id'], $a['additions']);
 			break;
 			case 'twitter':
-				$this->throw_error(__('Twitter Stream is no longer available, for further information, please check https://www.sliderrevolution.com/faq/why-are-we-dropping-twitter-api-integration/', 'revslider'));
+				$this->throw_error(__('Twitter Stream is no longer available, for further information, please check https://sr6archive.sliderrevolution.com/faq/why-are-we-dropping-twitter-api-integration/', 'revslider'));
 			break;
 			case 'instagram':
 				$this->init_by_instagram($a['slider_id'], $a['additions']);
