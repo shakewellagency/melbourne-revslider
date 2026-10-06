@@ -10,7 +10,7 @@ if(!defined('ABSPATH')) exit();
 class RevSliderApi extends RevSliderFunctions {
 	private $global_settings	= array();
 	public $demo_allowed		= array('get_template_information_short', 'import_template_slider', 'install_template_slide', 'get_list_of', 'get_global_settings', 'get_full_slider_object', 'subscribe_to_newsletter', 'check_system', 'load_module', 'get_addon_list', 'get_layers_by_slide', 'silent_slider_update', 'get_help_directory', 'set_tooltip_preference', 'load_builder', 'load_library_object', 'get_tooltips');
-	public $user_allowed		= array('activate_plugin', 'deactivate_plugin', 'import_template_slider', 'install_template_slide', 'import_slider', 'delete_slider', 'create_navigation_preset', 'delete_navigation_preset', 'save_navigation', 'delete_animation', 'save_animation', 'check_system', 'fix_database_issues', 'trigger_font_deletion');
+	public $user_allowed		= array('get_full_slider_object_v7', 'load_google_font', 'close_deregister_popup', 'dismiss_dynamic_notice', 'check_for_updates', 'getSliderImage', 'getSliderSizeLayout', 'get_list_of', 'load_wordpress_object', 'get_global_settings', 'get_slides_by_slider_id', 'get_full_slider_object', 'load_builder', 'preview_slider', 'subscribe_to_newsletter', 'check_system', 'load_module', 'load_library_object', 'get_addon_list', 'get_layers_by_slide', 'silent_slider_update', 'load_wordpress_image', 'load_library_image', 'get_help_directory', 'get_tooltips', 'set_tooltip_preference', 'get_facebook_photosets', 'get_flickr_photosets', 'get_youtube_playlists', 'get_same_aspect_ratio', 'get_addons_sizes');
 	public $no_cache			= array('get_template_information_short', 'export_slider', 'export_slider_html', 'getSliderImage', 'getSliderSizeLayout', 'get_list_of', 'load_wordpress_object', 'get_global_settings', 'get_slides_by_slider_id', 'get_full_slider_object', 'load_builder', 'subscribe_to_newsletter', 'check_system', 'get_layers_by_slide', 'export_layer_group', 'load_wordpress_image', 'load_library_image', 'get_help_directory', 'get_tooltips', 'get_addons_sizes', 'get_v5_slider_list');
 	public $REST				= false;
 
@@ -139,13 +139,11 @@ class RevSliderApi extends RevSliderFunctions {
 			}
 			
 			$sr_admin = RevSliderGlobals::instance()->get('RevSliderAdmin');
+			
 			if(!current_user_can($sr_admin->get_user_role()) && apply_filters('revslider_restrict_role', true)){
-				if(in_array($action, $this->user_allowed)){
-					$this->ajax_response_error(__('Function only available for administrators', 'revslider'));
-					exit;
-				}else{
-					$return = apply_filters('revslider_admin_onAjaxAction_user_restriction', true, $action, $data, $slider, $slide);
-					if($return !== true){
+				if(!in_array($action, $this->user_allowed)){
+					$return = apply_filters('revslider_admin_onAjaxAction_user_restriction', false, $action, $data, $slider, $slide);
+					if($return === false){
 						$this->ajax_response_error(__('Function only available for administrators', 'revslider'));
 						exit;
 					}
@@ -205,6 +203,10 @@ class RevSliderApi extends RevSliderFunctions {
 					
 					if(!empty($code)){
 						$result = $rs_license->activate_plugin($code);
+						$last_request = RevSliderGlobals::instance()->get('RevSliderLoadBalancer')->get_last_request();
+						if ( is_wp_error($last_request) ) {
+							$this->ajax_response_error( $last_request->get_error_message() );
+						}
 					}else{
 						$this->ajax_response_error(__('The License Key needs to be set!', 'revslider'));
 						exit;
@@ -226,6 +228,11 @@ class RevSliderApi extends RevSliderFunctions {
 				case 'deactivate_plugin':
 					$rs_license = new RevSliderLicense();
 					$result = $rs_license->deactivate_plugin();
+
+					$last_request = RevSliderGlobals::instance()->get('RevSliderLoadBalancer')->get_last_request();
+					if ( is_wp_error($last_request) ) {
+						$this->ajax_response_error( $last_request->get_error_message() );
+					}
 
 					if($result){
 						$this->ajax_response_success(__('Plugin deregistered', 'revslider'));
@@ -257,8 +264,14 @@ class RevSliderApi extends RevSliderFunctions {
 				case 'check_for_updates':
 					$update = new RevSliderUpdate(RS_REVISION);
 					$update->force = true;
-					
 					$update->_retrieve_version_info();
+
+					$last_request = RevSliderGlobals::instance()->get('RevSliderLoadBalancer')->get_last_request();
+					if ( is_wp_error($last_request) ) {
+						$this->ajax_response_error( $last_request->get_error_message() );
+					}
+
+					$update->add_update_checks();
 					$version = get_option('revslider-latest-version', RS_REVISION);
 					
 					if($version !== false){
@@ -954,14 +967,17 @@ class RevSliderApi extends RevSliderFunctions {
 						$rslb			= RevSliderGlobals::instance()->get('RevSliderLoadBalancer');
 						$temp_url		= $rslb->get_url('templates', 0, true).'/'.$templates->templates_server_path;
 						$defaults		= $this->get_addition(array('templates', 'guide'));
-						
+						$updir			= wp_upload_dir();
+						$updurl			= $this->get_val($updir, 'baseurl');
 						$template_data	= $templates->get_tp_template_sliders($uid);
+
 						if(!empty($template_data)){
 							foreach($template_data as $data){
 								$title			= $this->get_val($data, 'guide_title');
 								$url			= $this->get_val($data, 'guide_url');
 								$img			= $this->get_val($data, 'guide_img');
 								$template_img	= $this->get_val($data, 'img');
+								$template_img	= (!empty($template_img) && strpos($template_img, 'http') === false) ? $updurl . '/revslider/templates/' .$template_img : $template_img;
 								$obj['guide'] = array(
 									'title'			=> (empty($title)) ? $this->get_val($defaults, 'title') : $title,
 									'url'			=> (empty($url)) ? $this->get_val($defaults, 'url') : $url,
@@ -1066,6 +1082,11 @@ class RevSliderApi extends RevSliderFunctions {
 						}
 						$content = '[rev_slider alias="' . esc_attr($slider->get_alias()) . '"][/rev_slider]';
 					}elseif(!empty($slider_data)){
+						//disallow if current user is not allowed to
+						if(!current_user_can($sr_admin->get_user_role()) && apply_filters('revslider_restrict_role', true)){
+							$this->ajax_response_error(__('Function only available for administrators', 'revslider'));
+						}
+
 						$_slides = array();
 						$_static = array();
 						$slides = array();
@@ -1209,8 +1230,12 @@ class RevSliderApi extends RevSliderFunctions {
 					$update = new RevSliderUpdate(RS_REVISION);
 					$update->force = true;
 					$update->_retrieve_version_info();
-
 					$system = $sr_admin->get_system_requirements();
+
+					$last_request = RevSliderGlobals::instance()->get('RevSliderLoadBalancer')->get_last_request();
+					if ( is_wp_error($last_request) ) {
+						$system['server_error'] = $last_request->get_error_message();
+					}
 
 					$this->ajax_response_data(array('system' => $system));
 				break;
@@ -1336,11 +1361,14 @@ class RevSliderApi extends RevSliderFunctions {
 					$this->ajax_response_data(array('layers' => $layers));
 				break;
 				case 'activate_addon':
-					$handle = $this->get_val($data, 'addon');
-					$update = $this->get_val($data, 'update', false);
-					$addon = new RevSliderAddons();
+					$return = false;
+					if ( current_user_can( 'activate_plugins' ) && current_user_can( 'install_plugins' ) ) {
+						$handle = $this->get_val( $data, 'addon' );
+						$update = $this->get_val( $data, 'update', false );
+						$addon  = new RevSliderAddons();
 
-					$return = $addon->install_addon($handle, $update);
+						$return = $addon->install_addon( $handle, $update );
+					}
 
 					if($return === true){
 						$version = $addon->get_addon_version($handle);
@@ -1356,9 +1384,12 @@ class RevSliderApi extends RevSliderFunctions {
 					}
 				break;
 				case 'deactivate_addon':
-					$handle = $this->get_val($data, 'addon');
-					$addon = new RevSliderAddons();
-					$return = $addon->deactivate_addon($handle);
+					$return = false;
+					if ( current_user_can( 'activate_plugins' ) ) {
+						$handle = $this->get_val( $data, 'addon' );
+						$addon  = new RevSliderAddons();
+						$return = $addon->deactivate_addon( $handle );
+					}
 
 					if($return){
 						//return needed files of the plugin somehow

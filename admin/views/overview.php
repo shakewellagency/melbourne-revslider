@@ -63,6 +63,33 @@ $rs_languages	= $rsaf->get_available_languages();
 		<a href="https://account.sliderrevolution.com/portal/?utm_source=admin&utm_medium=button&utm_campaign=srusers&utm_content=members" target="_blank" rel="noopener" id="rs_memarea_registered" class="basic_action_button longbutton basic_action_lilabutton"><i class="material-icons">person_outline</i><?php _e('Members Area', 'revslider');?></a>
 	</div>
 	
+	<?php if ($rs_v7_selling) { ?>
+		<!-- SR7 IS AVAILABLE -->
+		<div id="sr67-versionbadge" class="v_velocity">
+		<i class="sr67-badgeicon"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg></i>
+		<div class="sr67-badge-left">
+			<div class="simpletext"><?php _e('Now Available', 'revslider');?></div>
+			<div id="sr67-engine">Slider Revolution 7</div>
+			<?php if ($rs_license_type=="subscription" || $rs_license_type=="extended") {?> <div class="sr7-engine-animspacer" style="opacity:0">.</div><?php } ?>
+		</div><!--
+		--><div class="sr67-badge-right">
+			<?php if ($rs_license_type=="subscription" || $rs_license_type=="extended") {?>
+				<div class="lilasmallbutton upgradetosr7"><?php _e('Upgrade to SR7', 'revslider');?></div>
+			 	<a class="lilasimplelink sr7-engine-animspacer" href="https://www.sliderrevolution.com/help/how-to-upgrade-to-slider-revolution-7/" target="_blank" rel="noopener"><?php _e('SR7 Upgrade Guide', 'revslider');?></a>	
+			<?php } else { if ($rs_valid===true) {?>
+				<a class="lilasmallbutton" href="https://www.sliderrevolution.com/help/how-to-upgrade-to-slider-revolution-7/" target="_blank" rel="noopener"><?php _e('Unlock SR7', 'revslider');?></a>
+			 <?php } else {?>
+				<a class="lilasmallbutton" href="https://account.sliderrevolution.com/portal/premium-slider-revolution/" target="_blank" rel="noopener"><?php _e('Unlock SR7', 'revslider');?></a>
+			 <?php }} ?>		
+		</div>
+		<div class="sr67-tooltip sr7-tooltip">
+			<div class="is_velocity sr67-tooptip-title"><?php _e("Slider Revolution 7 Has Launched",'revslider');?></div>			
+			<div class="div20"></div>
+			<div class="is_velocity simpletext"><?php _e('A completely rebuilt experience with intelligent workflows, generative AI tools, and faster creation.<br>SR6 continues to receive maintenance updates<br><br><b>Feature development continues exclusively in SR7.</b>','revslider');?></div>			
+		</div>
+	</div>
+	<?php }  else { ?>
+		<!-- SR7 Is NOT AVAILABLE YET -->
 	<div id="sr67-versionbadge" class="<?php echo ($rs_front_version == 7) ? 'v_velocity' : 'v_genesis'; ?>">
 		<i class="sr67-badgeicon"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg></i>
 		<div class="sr67-badge-left">
@@ -81,7 +108,7 @@ $rs_languages	= $rsaf->get_available_languages();
 			<div class="is_genesis simpletext"><?php _e("Not sure what you need to do?",'revslider');?><br><?php _e("No problem. We will handhold you through the",'revslider');?><br><?php _e('process in our "Engine guide" on the left.', 'revslider');?></div>
 			<div class="sr67-tooltip-arrow"></div>
 		</div>
-	</div>
+	</div>	
 
 	<div id="sr67-minimigration" class="<?php echo ($rs_front_version == 7) ? 'v_velocity' : 'v_genesis'; ?>">
 		<i id="sr7_migration_badgeicon" class="sr67-badgeicon"><sr_pulsing_dot></sr_pulsing_dot></i>
@@ -90,6 +117,7 @@ $rs_languages	= $rsaf->get_available_languages();
 			<div id="sr67-engine"><span id="sr7_migratedcount">0</span>/<span id="sr7_alltomigrate">0</span></div>
 		</div>
 	</div>
+	<?php } ?>
 
 	<!-- CREATE YOUR SLIDERS -->
 	<div id="add_new_slider_wrap">
@@ -136,9 +164,23 @@ $rs_languages	= $rsaf->get_available_languages();
 			<grayiconbox><i class="material-icons">flag</i></grayiconbox><div class="pli_twoline"><div class="pli_subtitle"><?php _e('Installed Version', 'revslider');?></div><div class="dynamicval pli_subtitle"><?php echo RS_REVISION; ?></div></div>
 			<div class="div10"></div>
 			<grayiconbox id="available_version_icon"><i class="material-icons">cloud_download</i></grayiconbox><div id="available_version_content" class="pli_twoline"><div class="pli_subtitle"><?php _e('Available Version', 'revslider');?></div><div class="available_latest_version dynamicval pli_subtitle"><?php echo $latest_version; ?></div></div>
-			<darkiconbox id="check_for_updates" class="rfloated"><i class="material-icons">refresh</i></darkiconbox>			
+			<darkiconbox class="check_for_updates rfloated"><i class="material-icons">refresh</i></darkiconbox>			
 			<div class="div50"></div>
-			<bluebutton id="updateplugin"><?php _e('Update Now', 'revslider');?></bluebutton>
+			<?php if ($rs_v7_selling) { ?>			
+			<bluebutton id="updateplugin" style="width:calc(50% - 5px);display:inline-block;margin-right:5px;vertical-align:top;"><?php _e('Update SR6', 'revslider');?></bluebutton>
+			<div style="width:calc(50% - 5px);display:inline-block;vertical-align:top;">				
+				<?php if ($rs_license_type=="subscription" || $rs_license_type=="extended") {?>
+					<purplebutton class="upgradetosr7" ><?php _e('Upgrade to SR7', 'revslider');?></purplebutton>
+					<a class="whitesimplelink" style="display:block; margin-top:10px; font-size:14px; text-align:center" href="https://www.sliderrevolution.com/help/how-to-upgrade-to-slider-revolution-7/" target="_blank" rel="noopener"><?php _e('SR7 Upgrade Guide', 'revslider');?></a>
+				<?php } else { if ($rs_valid===true) {?>				
+					<a class="purplebutton" id="unlockupgrade" href="https://www.sliderrevolution.com/help/how-to-upgrade-to-slider-revolution-7/" target="_blank" rel="noopener"><?php _e('Unlock SR7', 'revslider');?></a>
+				<?php } else {?>
+					<a class="purplebutton" id="unlockupgrade" href="https://account.sliderrevolution.com/portal/premium-slider-revolution/"  target="_blank" rel="noopener"><?php _e('Unlock SR7 Upgrade', 'revslider');?></a>					
+			 <?php }} ?>		
+			</div>
+			<?php } else { ?>
+				<bluebutton id="updateplugin"><?php _e('Update Now', 'revslider');?></bluebutton>
+			<?php } ?>
 			<div class="div75"></div>
 			<h3 class="pli_title"><?php _e('System Requirements', 'revslider');?></h3>
 			<div id="system_requirements">
@@ -149,7 +191,7 @@ $rs_languages	= $rsaf->get_available_languages();
 				<div id="syscheck_max_allowed_packet" class="system_requirement"><i class="material-icons done_icon">done</i><i class="material-icons warning_icon">warning</i><?php _e('Max. Allowed Package', 'revslider');?>&nbsp;(<span>16M</span>)</div>
 				<div id="syscheck_zlib_enabled" class="system_requirement"><i class="material-icons done_icon">done</i><i class="material-icons warning_icon">warning</i><?php _e('Zlib Library', 'revslider');?></div>
 				<div id="syscheck_object_library_writable" class="system_requirement"><i class="material-icons done_icon">done</i><i class="material-icons warning_icon">warning</i><?php _e('Object Library', 'revslider');?></div>
-				<div id="syscheck_server_connect" class="system_requirement"><i class="material-icons done_icon">done</i><i class="material-icons warning_icon">warning</i><?php _e('ThemePunch Server', 'revslider');?><darkiconbox id="check_for_themepunchserver" class="rfloated"><i class="material-icons">refresh</i></darkiconbox><darkiconbox id="faq_to_systemrequirements" class="rfloated"><a href="https://www.sliderrevolution.com/documentation/system-requirements/" target="_blank" rel="noopener"><i class="material-icons">question_mark</i></a></darkiconbox></div>
+				<div id="syscheck_server_connect" class="system_requirement"><i class="material-icons done_icon">done</i><i class="material-icons warning_icon">warning</i><?php _e('ThemePunch Server', 'revslider');?><darkiconbox id="check_for_themepunchserver" class="rfloated"><i class="material-icons">refresh</i></darkiconbox><darkiconbox id="faq_to_systemrequirements" class="rfloated"><a href="https://sr6archive.sliderrevolution.com/documentation/system-requirements/" target="_blank" rel="noopener"><i class="material-icons">question_mark</i></a></darkiconbox></div>
 			</div>
 		</div>
 		<!-- PLUGIN HISTORY -->
@@ -169,7 +211,7 @@ $rs_languages	= $rsaf->get_available_languages();
 			<row>
 
 				<onehalf style="padding-right:5px"><div id="activated_ornot_box" class="box_with_icon"><i class="material-icons">done</i><?php _e('Registered', 'revslider');?></div></onehalf>
-				<onehalf style="padding-left:5px"><a target="_blank" rel="noopener" href="<?php echo 'https://www.sliderrevolution.com/faq/where-to-find-purchase-code/?utm_source=admin&utm_medium=button&utm_campaign=srusers&utm_content=findkey'; ?>" class="box_with_icon"><i class="material-icons">vpn_key</i><?php echo __('Find My Key', 'revslider');?></a></onehalf>
+				<onehalf style="padding-left:5px"><a target="_blank" rel="noopener" href="<?php echo 'https://sr6archive.sliderrevolution.com/faq/where-to-find-purchase-code/?utm_source=admin&utm_medium=button&utm_campaign=srusers&utm_content=findkey'; ?>" class="box_with_icon"><i class="material-icons">vpn_key</i><?php echo __('Find My Key', 'revslider');?></a></onehalf>
 			</row>
 			<div class="div10"></div>
 			<div id="purchasekey_wrap" class="activated">

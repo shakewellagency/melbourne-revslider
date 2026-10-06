@@ -32,6 +32,8 @@ $rs_global_settings		 = $rsaf->get_global_settings();
 $rs_notices				 = $rsaf->add_notices();
 $rs_tutorial			 = $rsaf->get_addition(array('templates', 'tutorials'));
 $rs_tutorial_bottom		 = $rsaf->get_addition(array('templates', 'bottom'));
+$rs_v7_selling			 = $rsaf->_truefalse($rsaf->get_addition('v7'));
+$rs_license_type		 = $rsaf->get_addition('license');
 $rs_color_picker_presets = RSColorpicker::get_color_presets();
 $rs_compression			 = $rsaf->compression_settings();
 $rs_backend_fonts		 = $rsaf->get_font_familys();
@@ -154,6 +156,8 @@ $rs_show_deregister_popup = $rsaf->_truefalse(get_option('revslider-deregister-p
 		tutorial:		<?php echo (!empty($rs_tutorial)) ? 'JSON.parse('. $rsaf->json_encode_client_side($rs_tutorial) .')' : '[]'; ?>,
 		bottom:			<?php echo (!empty($rs_tutorial_bottom)) ? 'JSON.parse('. $rsaf->json_encode_client_side($rs_tutorial_bottom) .')' : '[]'; ?>
 	};
+	RVS.ENV.SR7				= <?php echo ($rs_v7_selling) ? 'true' : 'false'; ?>;
+	RVS.ENV.LIC				= '<?php echo (in_array($rs_license_type, array('none', 'lifetime', 'subscription','extended','cc'), true)) ? $rs_license_type : 'none'; ?>';
 	<?php
 	if($rs_slider_update_needed == true){
 	?>
@@ -178,7 +182,7 @@ $rs_show_deregister_popup = $rsaf->_truefalse(get_option('revslider-deregister-p
 	function rs_do_silent_update(){
 		RVS.F.ajaxRequest('silent_slider_update', {}, function(response){
 			if(response.status !== 'finished'){
-				rs_do_silent_update();
+				setTimeout(() => rs_do_silent_update(), 100);
 			}else{
 				RS_DO_SILENT_SLIDER_UPDATE = false;
 			}

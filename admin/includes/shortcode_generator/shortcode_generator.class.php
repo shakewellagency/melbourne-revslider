@@ -106,7 +106,7 @@ class RevSliderShortcodeWizard extends RevSliderFunctions {
 			wp_enqueue_script('revbuilder-utils', RS_PLUGIN_URL_CLEAN . 'admin/assets/js/modules/objectlibrary.js', array('jquery'), RS_REVISION, false);
 			wp_enqueue_script('revbuilder-optimizer', RS_PLUGIN_URL_CLEAN . 'admin/assets/js/modules/optimizer.js', array('jquery'), RS_REVISION, false);					
 		}else{
-			wp_enqueue_script('revbuilder-utils', RS_PLUGIN_URL_CLEAN . 'admin/assets/js/plugins/utils.min.js', array('jquery', 'wp-i18n', 'wp-color-picker'), RS_REVISION, false);
+			wp_enqueue_script('revbuilder-utils', RS_PLUGIN_URL_CLEAN . 'admin/assets/js/plugins/utils.min.js', array_merge(array('jquery', 'wp-i18n'), $divi ? array() : array('wp-color-picker')), RS_REVISION, false);
 		}
 		
 		wp_enqueue_script('tp-tools', RS_PLUGIN_URL_CLEAN . 'sr6/assets/js/rbtools.min.js', array('jquery'), RS_TP_TOOLS, true);
@@ -243,7 +243,7 @@ class RevSliderShortcodeWizard extends RevSliderFunctions {
 			'ihavelicensekey' => __('I have a License Key', 'revslider'),
 			'enterlicensekey' => __('Enter License Key', 'revslider'),
 			'premium_template' => __('PREMIUM TEMPLATE', 'revslider'),
-			'rs_premium_content' => __('This is a Premium template from the Slider Revolution <a target="_blank" rel="noopener" href="https://www.sliderrevolution.com/examples/">template library</a>. It can only be used on this website with a <a target="_blank" rel="noopener" href="https://www.sliderrevolution.com/manual/quick-setup-register-your-plugin/?utm_source=admin&utm_medium=button&utm_campaign=srusers&utm_content=registermanual">registered license key</a>.', 'revslider'),
+			'rs_premium_content' => __('This is a Premium template from the Slider Revolution <a target="_blank" rel="noopener" href="https://sr6archive.sliderrevolution.com/examples/">template library</a>. It can only be used on this website with a <a target="_blank" rel="noopener" href="https://sr6archive.sliderrevolution.com/manual/quick-setup-register-your-plugin/?utm_source=admin&utm_medium=button&utm_campaign=srusers&utm_content=registermanual">registered license key</a>.', 'revslider'),
 			'premium' => __('Premium', 'revslider'),
 			'premiumunlock' => __('REGISTER LICENSE TO UNLOCK', 'revslider')
 

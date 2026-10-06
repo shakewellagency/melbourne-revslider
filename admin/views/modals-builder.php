@@ -237,7 +237,7 @@ if(!defined('ABSPATH')) exit();
 								<li><a class="gm_blue_highlight" href="https://www.youtube.com/watch?v=hP4oV8SWgKY" target="_blank"><div class="gm_bl_play"><i class="rbm_symbol material-icons">play_circle</i><div class="gm_playicon_bg"></div></div><span>Responsiveness in Edited Templates</span></a></li>
 								<li><a class="gm_blue_highlight" href="https://www.youtube.com/watch?v=nn3azizwpbs" target="_blank"><div class="gm_bl_play"><i class="rbm_symbol material-icons">play_circle</i><div class="gm_playicon_bg"></div></div><span>Animation Basics</span></a></li>
 							</ul>
-							<div class="gm_bl_links"><a href="https://www.sliderrevolution.com/video-tutorials/?utm_source=admin&utm_medium=button&utm_campaign=editorguide&utm_content=videotutorials" target="_blank"><i class="rbm_symbol material-icons">north_east</i><span><?php _e('View All Tutorial Videos', 'revslider');?></span></a></div>
+							<div class="gm_bl_links"><a href="https://sr6archive.sliderrevolution.com/video-tutorials/?utm_source=admin&utm_medium=button&utm_campaign=editorguide&utm_content=videotutorials" target="_blank"><i class="rbm_symbol material-icons">north_east</i><span><?php _e('View All Tutorial Videos', 'revslider');?></span></a></div>
 						</div>
 					</div>
 					<div class="gm_right">
@@ -313,7 +313,7 @@ if(!defined('ABSPATH')) exit();
 								<li><a class="gm_blue_highlight" href="https://www.youtube.com/watch?v=U4gRsALKdzo" target="_blank"><div class="gm_bl_play"><i class="rbm_symbol material-icons">play_circle</i><div class="gm_playicon_bg"></div></div><span>Creating Modules</span></a></li>
 								<li><a class="gm_blue_highlight" href="https://www.youtube.com/watch?v=kUgZAYRlJrA" target="_blank"><div class="gm_bl_play"><i class="rbm_symbol material-icons">play_circle</i><div class="gm_playicon_bg"></div></div><span>Module Editor, Slides & Layers</span></a></li>
 							</ul>
-							<div class="gm_bl_links"><a href="https://www.sliderrevolution.com/video-tutorials/?utm_source=admin&utm_medium=button&utm_campaign=editorguide&utm_content=videotutorials" target="_blank"><i class="rbm_symbol material-icons">north_east</i><span><?php _e('View All Tutorial Videos', 'revslider');?></span></a></div>
+							<div class="gm_bl_links"><a href="https://sr6archive.sliderrevolution.com/video-tutorials/?utm_source=admin&utm_medium=button&utm_campaign=editorguide&utm_content=videotutorials" target="_blank"><i class="rbm_symbol material-icons">north_east</i><span><?php _e('View All Tutorial Videos', 'revslider');?></span></a></div>
 						</div>
 					</div>
 					<div class="gm_right">

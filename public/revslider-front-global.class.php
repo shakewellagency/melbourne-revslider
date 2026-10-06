@@ -69,15 +69,19 @@ class RevSliderFrontGlobal extends RevSliderFunctions {
 		global $wpdb;
 
 		self::create_tables();
+	}
 
-		$result = $wpdb->get_row("SELECT COUNT( DISTINCT id ) AS NumberOfEntrys FROM " . $wpdb->prefix . self::TABLE_SLIDER);
-		
+	/**
+	 * set the engine to v7 to prepare for the v7 upgrade!
+	 **/
+	public static function set_sr7_engine_active(){
 		$f = RevSliderGlobals::instance()->get('RevSliderFunctions');
-		if(intval($f->get_val($result, 'NumberOfEntrys', 0)) > 0) return true;
+		if($f->_truefalse(get_option('revslider_set_v7_engine', false))) return;
 
-		//set engine to SR7, as no Slider are currently present
 		$g = ['getTec' => ['engine' => 'SR7']];
 		$f->set_global_settings($g, true);
+
+		update_option('revslider_set_v7_engine', true);
 	}
 
 	/**
@@ -112,7 +116,7 @@ class RevSliderFrontGlobal extends RevSliderFunctions {
 			  slide_order int not NULL,
 			  params LONGTEXT NOT NULL,
 			  layers LONGTEXT NOT NULL,
-			  settings text NOT NULL DEFAULT '',
+			  settings text NULL,
 			  INDEX `slider_id_index` (`slider_id`)
 			);";
 			dbDelta($sql);

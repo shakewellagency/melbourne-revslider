@@ -147,7 +147,7 @@ if(!defined('ABSPATH')) exit();
 						<oneshort><div id="minilayerprevimage_wrap" class="miniprevimage_wrap"><i class="material-icons">filter_hdr</i><div id="layer_image_src"></div></div></oneshort>
 						<oneshort>
 							<div id="image_layer_media_library_button" data-evt="updatelayerimagesrc" data-r="media.imageUrl" data-rid="media.imageId" data-sty="behavior.imageSourceType" data-lib="media.imageLib" class="getImageFromMediaLibrary basic_action_button longbutton layerinput"><i class="material-icons">style</i><?php _e('Media Library', 'revslider');?></div>
-							<div id="image_layer_object_library_button" data-evt="" data-r="media.imageUrl" data-rid="media.imageId" data-sty="behavior.imageSourceType" data-lib="media.imageLib" class="getImageFromObjectLibrary basic_action_button longbutton layerinput"><i class="material-icons">camera_enhance</i><?php _e('Object Library', 'revslider');?></div>
+							<div id="image_layer_object_library_button" data-evt="updatelayerimagesrc" data-r="media.imageUrl" data-rid="media.imageId" data-sty="behavior.imageSourceType" data-lib="media.imageLib" class="getImageFromObjectLibrary basic_action_button longbutton layerinput"><i class="material-icons">camera_enhance</i><?php _e('Object Library', 'revslider');?></div>
 						</oneshort>
 					</row>
 					<div class="div15"></div>

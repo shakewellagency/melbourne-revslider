@@ -201,11 +201,12 @@ class RevSliderSliderExport extends RevSliderSlider {
 				if($a_thumb != '') $this->used_images[$a_thumb] = true;
 				
 				if(!empty($layers)){
+					
 					foreach($layers as $layer){
 						$type		= $this->get_val($layer, 'type', 'text');
 						$image		= $this->get_val($layer, array('media', 'imageUrl'));
 						$bg_image	= $this->get_val($layer, array('idle', 'backgroundImage'));
-						
+
 						if($image != '') $this->used_images[$image] = true;
 						if($bg_image != '')	$this->used_images[$bg_image] = true;
 						
@@ -381,7 +382,8 @@ class RevSliderSliderExport extends RevSliderSlider {
 	 **/
 	public function modify_used_data(){
 		$d = array('used_svg' => $this->used_svg, 'used_images' => $this->used_images, 'used_videos' => $this->used_videos);
-		$d = apply_filters('revslider_exportSlider_usedMedia', $d, $this->all_slides, $this->slider_params); //$this->export_slides, $this->static_slide, 
+		$d = apply_filters('revslider_exportSlider_usedMedia', $d, $this->all_slides, $this->slider_params); //$this->export_slides, $this->static_slide,
+		$d = apply_filters('sr_exportSlider_usedMedia', $d, $this->all_slides, $this->slider_params); //$this->export_slides, $this->static_slide,
 		
 		$this->used_svg		= $d['used_svg'];
 		$this->used_images	= $d['used_images'];
@@ -509,43 +511,50 @@ class RevSliderSliderExport extends RevSliderSlider {
 	 * add svg to the zip file, by modifying data in $export_data
 	 **/
 	public function add_svg_to_zip(){
+		// nothing to do
 		if(empty($this->used_svg)) return;
-		
-		$c_url	= $this->remove_http(content_url());
-		$c_path	= ABSPATH . 'wp-content';
-		$ud		= wp_upload_dir();
-		$up_dir	= $this->get_val($ud, 'baseurl');
-		$up_dir	= $this->remove_http($up_dir);
-		$cont_url			= $this->remove_http($this->get_val($ud, 'baseurl'));
-		$cont_url_no_www	= str_replace('www.', '', $cont_url);
-		$up_bdir			= rtrim(wp_normalize_path($this->get_val($ud, 'basedir')), '/'); // FS base for uploads
-		
+
+		$uploads = wp_upload_dir();
+		$uploadsBaseDir = rtrim(wp_normalize_path($this->get_val($uploads, 'basedir')), '/'); // e.g. D:/.../wp3/wp-content/uploads
+		$contentBaseDir = rtrim(wp_normalize_path(WP_CONTENT_DIR), '/');                      // e.g. D:/.../wp3/wp-content
+
 		foreach($this->used_svg as $file => $val){
-			if(strpos($file, 'http') !== false || substr($file, 0, 2) === '//' || substr($file, 0, 4) === '\/\/'){ //remove all up to wp-content folder
-				$file		= $this->remove_http($file);
-				$_checkpath = str_replace(array($cont_url.'/', $cont_url_no_www.'/'), '', $file);
-				
-				list($ok, $absPath, $zipRel) = $this->is_safe_export_path($_checkpath, $up_bdir, ['svg']);
-				
-				$_file = str_replace('/', '\/', $file);
+			// Turn any URL/path into content-relative (e.g. "plugins/revslider/public/assets/svg/.../ic.svg")
+			list($okRel, $contentRel) = $this->to_content_relative($file);
+			if(!$okRel){
+				// Try after removing scheme/host manually (very defensive)
+				$fileNoHttp = $this->remove_http($file);
+				list($okRel2, $contentRel) = $this->to_content_relative($fileNoHttp);
+				if(!$okRel2) continue; // skip if we still can't map it under wp-content
+			}
 
-				if($ok && is_file($absPath)){
-					//check if file is in the upload folder, if yes, add it to the zip file
-					if(!$this->usepcl){
-						$this->zip->addFile($absPath, 'images/' . $zipRel);
-					}else{
-						$this->pclzip->add($absPath, PCLZIP_OPT_REMOVE_PATH, $up_bdir, PCLZIP_OPT_ADD_PATH, 'images');
-					}
+			// Prefer validating directly under WP_CONTENT_DIR (covers plugins, themes, uploads)
+			list($ok, $absPath, $zipRel) = $this->is_safe_export_path($contentRel, $contentBaseDir, ['svg']);
 
-					$replacement_rel = str_replace('/revslider/assets/svg', '', $zipRel);
-					$replace         = $ok && is_file($absPath) ? str_replace('/', '\/', $replacement_rel) : '';
+			// Fallback: if someone provided an uploads-relative path and you specifically want to keep uploads base
+			if(!$ok && preg_match('~^uploads/~', $contentRel)){
+				$uploadsRel = substr($contentRel, strlen('uploads/'));
+				list($ok, $absPath, $zipRel) = $this->is_safe_export_path($uploadsRel, $uploadsBaseDir, ['svg']);
+			}
+
+			if($ok && is_file($absPath)){
+				// Add to zip under "images/"
+				if(!$this->usepcl){
+					$this->zip->addFile($absPath, 'images/' . ltrim($zipRel, '/'));
 				}else{
-					$replace		 = '';
+					// When adding via PCLZip from WP_CONTENT_DIR, remove that base and add under images/
+					$this->pclzip->add($absPath, PCLZIP_OPT_REMOVE_PATH, $contentBaseDir, PCLZIP_OPT_ADD_PATH, 'images');
 				}
-				
+
+				// Replace URLs in export data with zip-relative path (strip any /revslider/assets/svg from inside zip path as you had)
+				$replacement_rel = str_replace('/revslider/assets/svg', '', $zipRel);
+				$replacement_rel = str_replace('/', '\/', $replacement_rel);
+
+				$_file = str_replace('/', '\/', $this->remove_http($file));
+
 				$this->export_data = str_replace(
-					array('http:'.$_file, 'https:'.$_file, $_file, 'http:'.$file, 'https:'.$file, $file),
-					$replace,
+					array('http:' . $_file, 'https:' . $_file, $_file, $this->remove_http($file)),
+					$replacement_rel,
 					$this->export_data
 				);
 			}
@@ -556,104 +565,108 @@ class RevSliderSliderExport extends RevSliderSlider {
 	 * push images and videos to the zip file
 	 **/
 	public function add_images_videos_to_zip($root = false){
+		// Merge images + videos
 		$this->used_images = array_merge($this->used_images, $this->used_videos);
-		
-		if(!empty($this->used_images)){
-			$upload_dir			= $this->get_upload_path();
-			$upload_dir_multi	= wp_upload_dir();
-			$cont_url			= $this->get_val($upload_dir_multi, 'baseurl');
-			$cont_url2			= (strpos($cont_url, 'http://') !== false) ? str_replace('http://', 'https://', $cont_url) : str_replace('https://', 'http://', $cont_url);
-			$cont_url_no_www	= str_replace('www.', '', $cont_url);
-			$cont_url2_no_www	= str_replace('www.', '', $cont_url2);
-			$upload_dir_multi	= $this->get_val($upload_dir_multi, 'basedir').'/';
-			$basedir_secondary   = rtrim(wp_normalize_path($upload_dir), '/') . '/';               // FS path (your helper may differ)
-			$allowedExts		= ['png','jpg','jpeg','gif','webp','mp4','webm','mov','m4v','ogg','mpeg','mpg','mpe','ogv'];
-			
-			foreach($this->used_images as $file => $val){
-				//replace double // except the http:// https://
-				$file = str_replace(['http://','https://'], ['__HTTP__','__HTTPS__'], $file);
-				$file = str_replace('//', '/', $file);
-				$file = str_replace(['__HTTP__','__HTTPS__'], ['http://','https://'], $file);
-				
-				$ok = $abs = $zipEntry = null;
-				
-				if(strpos($file, 'http') !== false || substr($file, 0, 2) === '//' || substr($file, 0, 4) === '\/\/'){
-					//check if we are in objects folder, if yes take the original image into the zip-
-					$checkpath	= str_replace(array($cont_url.'/', $cont_url_no_www.'/', $cont_url2.'/', $cont_url2_no_www.'/'), '', $file);
-					
-					list($ok, $abs, $zipEntry) = $this->is_safe_export_path($checkpath, rtrim(wp_normalize_path($upload_dir), '/'), $allowedExts);
-					if(!$ok || !is_file($abs)){
-						list($ok, $abs, $zipEntry) = $this->is_safe_export_path($checkpath, rtrim(wp_normalize_path($upload_dir_multi), '/'), $allowedExts);
-						
-						$remove_base = rtrim(wp_normalize_path($upload_dir_multi), '/');
-					}else{
-						$remove_base = rtrim(wp_normalize_path($upload_dir), '/');
-					}
-					
-					$zipStorePath = $root ? basename($zipEntry) : ('images/' . $zipEntry);
-					$zipStorePathDir = $root ? '' : 'images';
-						
-					if($ok && is_file($abs)){
-						if(!$this->usepcl){
-							$this->zip->addFile($abs, $zipStorePath);
-						}else{
-							$this->pclzip->add($abs, PCLZIP_OPT_REMOVE_PATH, $remove_base, PCLZIP_OPT_ADD_PATH, $zipStorePathDir);
-						}
-					}
-					
-					/*
-					* fixes an issue where external urls were not getting processed
-					*/
-					try {
-						$unescaped = json_encode(json_decode($this->export_data), JSON_UNESCAPED_SLASHES); // only available from php 5.4
-					}
-					catch(Exception $e) {
-						$unescaped = $this->export_data;
-					}
-					
-					$replacement_rel = $ok ? ($root ? basename($zipEntry) : $zipEntry) : '';
-					
-					$this->export_data = str_replace(
-						array(
-							$file,
-							$cont_url  . '/' . $checkpath,
-							$cont_url_no_www  . '/' . $checkpath,
-							$cont_url2 . '/' . $checkpath,
-							$cont_url2_no_www . '/' . $checkpath
-						),
-						$replacement_rel,
-						$unescaped
-					);
-					// $this->export_data = str_replace(array($cont_url.$checkpath, $cont_url_no_www.$checkpath), $checkpath, $this->export_data);
-				}else{
-					$relCandidate = ltrim($file, '/');
+		if(empty($this->used_images)) return;
 
-					list($ok, $abs, $zipEntry) = $this->is_safe_export_path($relCandidate, rtrim(wp_normalize_path($upload_dir), '/'), $allowedExts);
-					if(!$ok || !is_file($abs)){
-						list($ok, $abs, $zipEntry) = $this->is_safe_export_path($relCandidate, rtrim(wp_normalize_path($upload_dir_multi), '/'), $allowedExts);
-						if ($ok && is_file($abs)) {
-							$ok = true;
-							$remove_base = rtrim(wp_normalize_path($upload_dir_multi), '/');
-						}
-					}else{
-						$remove_base = rtrim(wp_normalize_path($upload_dir), '/');
-					}
-					
-					if($ok && is_file($abs)){
-						$zipStorePath = $root ? basename($zipEntry) : ('images/' . $zipEntry);
+		// Bases
+		$uploads              = wp_upload_dir();
+		$uploadsBaseDir       = rtrim(wp_normalize_path($this->get_val($uploads, 'basedir')), '/'); // .../wp-content/uploads
+		$contentBaseDir       = rtrim(wp_normalize_path(WP_CONTENT_DIR), '/');                       // .../wp-content
+		$allowedExts          = ['png','jpg','jpeg','gif','webp','mp4','webm','mov','m4v','ogg','mpeg','mpg','mpe','ogv','json','mp3'];
 
-						if(!$this->usepcl){
-							$this->zip->addFile($abs, $zipStorePath);
-						}else{
-							$this->pclzip->add(
-								$abs,
-								PCLZIP_OPT_REMOVE_PATH, $remove_base,
-								PCLZIP_OPT_ADD_PATH,    $root ? '' : 'images'
-							);
-						}
-					}
-				}
+		foreach($this->used_images as $file => $val){
+			// collapse accidental double slashes without touching http(s)://
+			$_tmp = str_replace(['http://','https://'], ['__HTTP__','__HTTPS__'], $file);
+			$_tmp = str_replace('//', '/', $_tmp);
+			$file = str_replace(['__HTTP__','__HTTPS__'], ['http://','https://'], $_tmp);
+
+			$ok = false; $abs = null; $zipRel = null; $remove_base = null;
+
+			// 1) Map to a path relative to wp-content/ (plugins/... | themes/... | uploads/...)
+			list($okRel, $contentRel) = $this->to_content_relative($file);
+			if(!$okRel){
+				// very defensive: try again after stripping scheme/host
+				$fileNoHttp = $this->remove_http($file);
+				list($okRel2, $contentRel) = $this->to_content_relative($fileNoHttp);
+				if(!$okRel2) continue; // cannot map under wp-content -> skip
 			}
+
+			// 2) Validate under WP_CONTENT_DIR
+			list($ok, $abs, $zipRel) = $this->is_safe_export_path($contentRel, $contentBaseDir, $allowedExts);
+			$validatedBase = $ok ? $contentBaseDir : null;
+			
+			// 3) Fallback: if under uploads/, validate directly against uploads base
+			if(!$ok && preg_match('~^uploads/~', $contentRel)){
+				$uploadsRel = substr($contentRel, strlen('uploads/'));
+				list($ok, $abs, $zipRel) = $this->is_safe_export_path($uploadsRel, $uploadsBaseDir, $allowedExts);
+				if($ok) $validatedBase = $uploadsBaseDir;
+			}
+			if(!$ok || !is_file($abs)) continue;
+
+			// 4) Add to ZIP
+			$zipStorePath    = $root ? basename($zipRel) : ('images/' . ltrim($zipRel, '/'));
+			$zipStorePathDir = $root ? '' : 'images';
+			$remove_base     = $validatedBase;
+
+			if(!$this->usepcl){
+				$this->zip->addFile($abs, $zipStorePath);
+			}else{
+				$this->pclzip->add(
+					$abs,
+					PCLZIP_OPT_REMOVE_PATH, $remove_base,
+					PCLZIP_OPT_ADD_PATH,    $zipStorePathDir
+				);
+			}
+
+			// 5) Replace occurrences in export JSON/data with zip-relative path
+			//    Keep your "unescaped" logic for older PHP/edge cases.
+			try {
+				$unescaped = json_encode(json_decode($this->export_data), JSON_UNESCAPED_SLASHES);
+			} catch (Exception $e){
+				$unescaped = $this->export_data;
+			}
+
+			$replacement_rel = $root ? basename($zipRel) : $zipRel;
+			$needles = [];
+			// If it's a (proto-relative) URL, also replace http/https and www/no-www variants
+			if(preg_match('~^(?:https?:)?//~i', $file)){
+				$needles[] = $file; // always replace the original string
+				$withScheme = $file;
+				if(!preg_match('~^https?://~i', $withScheme)){
+					// add a dummy scheme to parse consistently
+					$withScheme = 'http:' . (substr($file, 0, 2) === '//' ? $file : ('//' . ltrim($file, '/')));
+				}
+				$pu = @parse_url($withScheme);
+				if(is_array($pu) && !empty($pu['host']) && !empty($pu['path'])){
+					$host   = $pu['host'];
+					$path   = $pu['path'];
+					$hosts  = [$host];
+					if(stripos($host, 'www.') === 0){
+						$hosts[] = substr($host, 4);
+					}else{
+						$hosts[] = 'www.' . $host;
+					}
+					foreach (['http','https'] as $sch){
+						foreach (array_unique($hosts) as $h){
+							$needles[] = $sch . '://' . $h . $path;
+						}
+					}
+					// also protocol-relative
+					$needles[] = '//' . $host . $path;
+					// and version with leading single slash if it ever appeared that way in data
+					$needles[] = $path;
+				}
+			}else{
+				// Non-URL strings: also try a leading slash variant
+				$rel = ltrim($file, '/');
+				$needles[] = '/' . $rel;
+				$needles[] = $rel;
+				$needles[] = $file; // always replace the original string
+				$needles[] = '//' . $rel; //remove the double // created by $needles[] = $rel;
+			}
+
+			$this->export_data = str_replace(array_unique($needles), $replacement_rel, $unescaped);
 		}
 	}
 	
@@ -798,31 +811,104 @@ class RevSliderSliderExport extends RevSliderSlider {
 		return $this->export_url_zip;
 	}
 
-	private function is_safe_export_path($relative, $baseDir, array $allowedExts){
-		// Normalize slashes
+	public function is_safe_export_path($relative, $baseDir, array $allowedExts){
+		// Normalize & decode once
 		$relative = wp_normalize_path($relative);
+		$relative = rawurldecode($relative); // catch %2e%2e etc.
 
-		// Must be a relative path (no drive letters, no leading slash)
-		if($relative === '' || $relative[0] === '/' || preg_match('~^[A-Za-z]:/~', $relative)) return [false, null, null];
+		// Remember if it started with a slash
+		$hadLeadingSlash = ($relative !== '' && $relative[0] === '/');
 
-		// Reject traversal / NULL bytes
-		if(strpos($relative, "\0") !== false || preg_match('~(^|/)\.\.(?:/|$)~', $relative)) return [false, null, null];
+		// Strip a single leading slash for internal checks
+		if($hadLeadingSlash) {
+			$relative = ltrim($relative, '/');
+		}
+
+		// Basic sanity: forbid empties, Windows drive letters, UNC, or schemes
+		if($relative === ''
+			|| preg_match('~^[A-Za-z]:[\\\\/]~', $relative)         // C:\ or C:/
+			|| preg_match('~^\\\\\\\\~', $relative)                 // \\server\share
+			|| preg_match('~^[A-Za-z][A-Za-z0-9+.-]*:~', $relative) // file:, php:, etc.
+		){
+			return [false, null, null];
+		}
+
+		// Collapse duplicate slashes and remove harmless "./" segments
+		$relative = preg_replace('~/+~', '/', $relative);
+		$relative = preg_replace('~(^|/)\\./~', '$1', $relative);
+
+		// Forbid traversal & null bytes & control chars
+		if(strpos($relative, "\0") !== false) return [false, null, null];
+		if(preg_match('~(^|/)\.\.(?:/|$)~', $relative)) return [false, null, null];
+		if(preg_match('~[[:cntrl:]]~', $relative)) return [false, null, null];
 
 		$baseDir = rtrim(wp_normalize_path($baseDir), '/');
-		$full    = realpath($baseDir . '/' . $relative);
+
+		// Resolve and ensure inside base
+		$full = realpath($baseDir . '/' . $relative);
 		if($full === false) return [false, null, null];
 
-		// Ensure final path is inside base
 		$fullNorm = wp_normalize_path($full);
-		if(strpos($fullNorm, $baseDir . '/') !== 0 && $fullNorm !== $baseDir) return [false, null, null];
+		if(strpos($fullNorm, $baseDir . '/') !== 0 && $fullNorm !== $baseDir){
+			return [false, null, null];
+		}
 
 		// Extension allowlist
 		$ext = strtolower(pathinfo($fullNorm, PATHINFO_EXTENSION));
 		if(!in_array($ext, $allowedExts, true)) return [false, null, null];
 
-		// Clean zip entry path (no leading "./", no backslashes)
-		$zipEntry = ltrim(str_replace('\\', '/', $relative), './');
+		// Produce clean ZIP entry path
+		$zipEntry = str_replace('\\', '/', $relative);
+		$zipEntry = ltrim($zipEntry, './');
+
+		// Always add back the leading slash for export consistency
+		if($hadLeadingSlash) {
+			$zipEntry = '/' . ltrim($zipEntry, '/');
+		}
 
 		return [true, $fullNorm, $zipEntry];
+	}
+
+	/**
+	 * Convert an http(s) or protocol-relative URL (or a path) into a path relative to WP_CONTENT_DIR.
+	 * Returns [bool $ok, string|null $contentRel].
+	 */
+	public function to_content_relative($input){
+		// normalize slashes
+		$norm = wp_normalize_path($input);
+
+		// If it's a URL, parse and extract the path (handles http, https, and //host)
+		if(preg_match('~^(?:https?:)?//~i', $norm)){
+			$parts = @parse_url($norm);
+			if(!is_array($parts) || empty($parts['path'])) return [false, null];
+			$norm = wp_normalize_path($parts['path']); // like /wp3/wp-content/plugins/...
+		}
+
+		// If it still includes domain-less prefix like //host/path (very rare after parse) – strip leading slashes
+		if(substr($norm, 0, 2) === '//') $norm = substr($norm, 2);
+
+		// We only allow anything under /wp-content/
+		$pos = strpos($norm, '/wp-content/');
+		if($pos === false){
+			// Case: already content-relative (plugins/..., themes/..., uploads/...)
+			if(preg_match('~^(?:plugins|themes|uploads)/~', ltrim($norm, '/'))){
+				$rel = ltrim($norm, '/');
+				return [true, '/' . $rel];
+			}
+
+			// Case: starts with "/" (like /revslider/...), treat as uploads-relative
+			if(substr($norm, 0, 1) === '/'){
+				$rel = ltrim($norm, '/');
+				return [true, '/uploads/' . $rel];
+			}
+
+			return [false, null];
+		}
+
+		// Make relative to wp-content/
+		$contentRel = substr($norm, $pos + strlen('/wp-content/'));
+		$contentRel = ltrim($contentRel, '/');
+
+		return ($contentRel !== '') ? [true, '/' . $contentRel] : [false, null];
 	}
 }

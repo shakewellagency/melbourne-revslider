@@ -89,12 +89,13 @@ class RevSliderSvgSubject
 		}
 
 		$id = $subject->getElementId();
-		if (isset($this->$arrName[$id])) {
-			$this->$arrName[$id]['count']++;
+		$arr = &$this->{$arrName};
+		if (isset($arr[$id])) {
+			$arr[$id]['count']++;
 			return;
 		}
 
-		$this->$arrName[$id] = [
+		$arr[$id] = [
 			'subject' => $subject,
 			'count' => 1,
 		];
@@ -124,8 +125,8 @@ class RevSliderSvgSubject
 	protected function doCount($arrName, $countFunc)
 	{
 		$count = 0;
-		foreach ($this->$arrName as $subject) {
-			$count += $subject['count'] * max(1, $subject['subject']->$countFunc());
+		foreach ($this->{$arrName} as $subject) {
+			$count += $subject['count'] * max(1, $subject['subject']->{$countFunc}());
 		}
 		return $count;
 	}

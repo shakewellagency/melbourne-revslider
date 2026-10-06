@@ -444,10 +444,10 @@ class RevSliderObjectLibrary extends RevSliderFunctions {
 			case '2':
 				$ftype = 'images';
 			break;
-			case '3';
+			case '3':
 				$ftype = 'videos';
 			break;
-			case '4';
+			case '4':
 				$ftype = 'layer';
 			break;
 			default:

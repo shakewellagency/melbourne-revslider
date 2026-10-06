@@ -918,19 +918,19 @@ class RevSliderFunctions extends RevSliderData {
 				if(!is_bool($f_s)) continue;
 				$loaded = false;
 				switch($f_n){
-					case 'Materialicons';
+					case 'Materialicons':
 						$ret .= RS_T3.'<link href="' . RS_PLUGIN_URL_CLEAN . 'public/css/fonts/material/material-icons.css" rel="stylesheet" property="stylesheet" media="all" type="text/css" />'."\n";
 						$loaded = array('url' => RS_PLUGIN_URL_CLEAN . 'public/css/fonts/material/material-icons.css', 'icon' => true, 'family' => 'Materialicons');
 					break;
-					case 'FontAwesome';
+					case 'FontAwesome':
 						$ret .= RS_T3.'<link href="' . RS_PLUGIN_URL_CLEAN . 'public/css/fonts/font-awesome/css/font-awesome.css" rel="stylesheet" property="stylesheet" media="all" type="text/css" />'."\n";
 						$loaded = array('url' => RS_PLUGIN_URL_CLEAN . 'public/css/fonts/font-awesome/css/font-awesome.css', 'icon' => true, 'family' => 'FontAwesome');
 					break;
-					case 'PeIcon';
+					case 'PeIcon':
 						$ret .= RS_T3.'<link href="' . RS_PLUGIN_URL_CLEAN . 'public/css/fonts/pe-icon-7-stroke/css/pe-icon-7-stroke.css" rel="stylesheet" property="stylesheet" media="all" type="text/css" />'."\n";
 						$loaded = array('url' => RS_PLUGIN_URL_CLEAN . 'public/css/fonts/pe-icon-7-stroke/css/pe-icon-7-stroke.css', 'icon' => true, 'family' => 'Pe-icon-7-stroke');
 					break;
-						case 'RevIcon';
+					case 'RevIcon':
 						$ret .= RS_T3.'<link href="' . RS_PLUGIN_URL_CLEAN . 'public/css/fonts/revicons/css/revicons.css" rel="stylesheet" property="stylesheet" media="all" type="text/css" />'."\n";
 						$loaded = array('url' => RS_PLUGIN_URL_CLEAN . 'public/css/fonts/revicons/css/revicons.css', 'icon' => true, 'family' => 'revicons');
 					break;
@@ -943,7 +943,7 @@ class RevSliderFunctions extends RevSliderData {
 
 		if(!empty($SR_GLOBALS['fonts']['queue'])){
 			$this->remove_wordpress_global_fonts();
-
+			
 			$font_types = array('normal', 'italic');
 			
 			foreach($SR_GLOBALS['fonts']['queue'] as $f_n => $f_s){
@@ -977,6 +977,7 @@ class RevSliderFunctions extends RevSliderData {
 							$weights = array();
 							foreach($font_types as $ft){
 								if(!isset($f_s['variants'][$ft])) continue;
+								if(empty($f_s['variants'][$ft])) continue;
 								$weights[$ft] = array();
 								foreach($f_s['variants'][$ft] as $variant){
 									if(in_array($variant, $SR_GLOBALS['fonts']['loaded'][$f_n]['variants'][$ft], true)) continue;
@@ -988,7 +989,7 @@ class RevSliderFunctions extends RevSliderData {
 							}
 							if(empty($weights)) continue;
 							
-							$i = 0;
+							$i = (empty($weights['normal'])) ? 1 : 0;
 							foreach($weights as $weight_values){
 								if(empty($weight_values)) continue;
 
@@ -1162,7 +1163,7 @@ class RevSliderFunctions extends RevSliderData {
 		if(!class_exists('WP_Font_Face_Resolver')) return;
 		if(!method_exists('WP_Font_Face_Resolver', 'get_fonts_from_theme_json' )) return;
 		if(!method_exists('WP_Font_Face_Resolver', 'get_fonts_from_style_variations' )) return;
-
+		
 		$wp_font_list = [];
 		$wp_fonts = WP_Font_Face_Resolver::get_fonts_from_theme_json();
 		if(empty($wp_fonts)) $wp_fonts = WP_Font_Face_Resolver::get_fonts_from_style_variations();
@@ -1295,62 +1296,72 @@ class RevSliderFunctions extends RevSliderData {
 			$font_loaded = array();
 			if(!empty($f_raw) && is_array($f_raw) && isset($f_raw[1])){
 				//check if we are css2 or css format, if css, we need to modify $font to css2
-				if(strpos($f_raw[1], ',') !== false && strpos($f_raw[1], ';') === false || intval($f_raw[1]) > 0){
-					$f_raw[1]	= str_replace(array('%2C', 'wght', '@0,', ';0,', '@', '&family='), array(',', '', '', ',', '', ''), $f_raw[1]);
-					$font = $f_raw[0].':';
-					$weights = explode(',', $f_raw[1]);
+				if(isset($f_raw[1]) && preg_match('/^\s*ital\s*,\s*wght@/i', $f_raw[1])){
 					$collection = array('normal' => array(), 'italic' => array());
-					foreach($weights ?? [] as $wk => $weight){
-						$weight = strtolower($weight);
-						if(strpos($weight, 'ital') !== false){
-							$weight = str_replace(array('ital', 'italic'), '', $weight);
-							if(intval($weight) === 0) $weight = 400;
-							$collection['italic'][$weight] = $weight;
+					$afterAt	= substr($f_raw[1], strpos($f_raw[1], '@') + 1); // e.g. "0,900;1,700"
+					$pairs		= array_filter(array_map('trim', explode(';', $afterAt)));
+
+					foreach($pairs as $pair){
+						$parts = array_map('trim', explode(',', $pair));
+						if(count($parts) !== 2) continue;
+						list($italFlag, $w) = $parts;
+						$w = intval($w) ?: 400;
+
+						if($italFlag === '1'){
+							$collection['italic'][$w] = $w;
 						}else{
-							$collection['normal'][$weight] = $weight;
+							// treat anything not "1" as normal (Google uses 0 or omits)
+							$collection['normal'][$w] = $w;
 						}
 					}
 
-					if(!empty($collection['normal']) || !empty($collection['italic'])){
-						$mgfirst = true;
-						$italic = false;
-						if(!empty($collection['italic'])){
-							$font .= 'ital,';
-							$italic = true;
+					// Rebuild a normalized css2 query string (sorted)
+					$font = $f_raw[0] . ':';
+					$haveItalic = !empty($collection['italic']);
+					$font .= ($haveItalic ? 'ital,' : '') . 'wght@';
+
+					$mgfirst = true;
+					$i = 0;
+					foreach(array('normal', 'italic') as $cycle){
+						if(empty($collection[$cycle])) { $i++; continue; }
+						$vals = $collection[$cycle];
+						asort($vals);
+
+						foreach($vals as $w){
+							if (!$mgfirst) $font .= ';';
+							$font .= ($haveItalic ? ($i . ',' . $w) : $w); // pairs (0|1),weight if ital axis present
+							$mgfirst = false;
 						}
-						$font .= 'wght@';
-
-						$i = 0;
-						$cycles = array('normal', 'italic');
-						
-						foreach($cycles as $cycle){
-							$weight_values = $collection[$cycle];
-							//var_dump($weight_values);
-							if(empty($weight_values)) continue;
-
-							asort($weight_values); //sort as we need to start from low to high
-
-							foreach($weight_values as $weight){
-								if(!$mgfirst) $font .= ';';
-
-								$font .= ($italic === true) ? $i.','.$weight : $weight;
-								$mgfirst = false;
-							}
-							$i++;
-						}
+						$i++;
 					}
-				}else{ //no /css2 process here as we seem to be /css
-					$f_raw[1]	= str_replace(array('%2C', 'wght', '@0,', ';0,', '@', ';', '&family='), array(',', '', '', ',', '', ',', ''), $f_raw[1]);
-					$weights	= explode(',', $f_raw[1]);
-					foreach($weights ?? [] as $wk => $weight){
-						if($weight === 'ital' || $weight === 'italic'){
-							$weights[$wk] = 'italic';
-							continue;
-						}
-						$weights[$wk] = intval($weight);
-						if($weights[$wk] < 100) unset($weights[$wk]);
-					}
+
+					// Build the $weights list for downstream writing:
+					// normal weights -> "900", italic weights -> "italic900"
+					$weights = array();
+					foreach($collection['normal'] as $w)  $weights[] = (string)$w;
+					foreach($collection['italic'] as $w)  $weights[] = 'italic' . $w;
+
+					$weights = array_values(array_unique($weights));
+					if(empty($weights)) $weights = array('400');
+				}else{
+					// Legacy /css format (no css2 pairing); keep your original fallback
+					$f_raw[1] = str_replace(
+						array('%2C', 'wght', '@0,', ';0,', '@', ';', '&family='),
+						array(',', '', '', ',', '', ',', ''),
+						$this->get_val($f_raw, 1, '')
+					);
+
+					$weights = array_filter(array_map(function($w){
+						$w = strtolower(trim($w));
+						if($w === 'ital' || $w === 'italic') return 'italic400';
+						$wInt = intval($w);
+						return ($wInt >= 100) ? (string)$wInt : null;
+					}, explode(',', $f_raw[1])));
+
+					if(empty($weights)) $weights = array('400');
+					$weights = array_values(array_unique($weights));
 				}
+
 				if(empty($weights)) $weights = array('400');
 				$weights = array_unique($weights);
 			}

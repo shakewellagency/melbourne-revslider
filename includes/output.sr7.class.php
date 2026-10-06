@@ -837,6 +837,8 @@ class RevSlider7Output extends RevSliderFunctions {
 				ob_end_clean();
 			}
 
+			// Do not output error markup in REST API requests
+			if (defined('REST_REQUEST') && REST_REQUEST) $this->console_exception = true;
 			if($this->console_exception){
 				$this->print_error_message_console($message);
 			}else{
@@ -1241,15 +1243,15 @@ class RevSlider7Output extends RevSliderFunctions {
 		}
 
 		switch($this->get_layout()){ //check for gutenberg editor changes
-			case 'auto';
+			case 'auto':
 				$fullwidth = false;
 				$fullheight = false;
 			break;
-			case 'fullwidth';
+			case 'fullwidth':
 				$fullwidth = true;
 				$fullheight = false;
 			break;
-			case 'fullscreen';
+			case 'fullscreen':
 				$fullwidth = true;
 				$fullheight = true;
 			break;
@@ -1350,12 +1352,13 @@ class RevSlider7Output extends RevSliderFunctions {
 			$html .= "plColor:'".esc_attr($plColor)."'";
 		}
 		$html_id = esc_attr($this->get_html_id());
-		$ret = 'SR7.PMH ??={}; '.
+		$ret = 'window.SR7 ??={};'.
+			'SR7.PMH ??={}; '.
 			'SR7.PMH["'. $html_id .'"] = {' .
 			'cn:100,'.
 			'state:false,'.
 			'fn: function() {'.
-				' if (_tpt!==undefined && _tpt.prepareModuleHeight !== undefined) {'.
+				' if (window._tpt!==undefined && window._tpt.prepareModuleHeight !== undefined) {'.
 				'  _tpt.prepareModuleHeight({id:"'. $html_id .'",'. $html .'});'.
 				'   SR7.PMH["'. $html_id .'"].state=true;'.
 				'} else if(SR7.PMH["'. $html_id .'"].cn-->0)'.
